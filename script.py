@@ -7,9 +7,10 @@ from PIL import Image
 
 class FaceMirror:
     def __init__(self):
-        self.image_path = sys.argv[1]
-        self.cascade_path = sys.argv[2]
-        self.scale_factor = float(sys.argv[3])
+        self.side_choise = sys.argv[1] #face side parameter
+        self.image_path = sys.argv[2] #path of the initial image
+        self.cascade_path = sys.argv[3] #path of the haarcascade.xml file
+        self.scale_factor = float(sys.argv[4]) #image scaling parameter
         self.folder_create('temp/')
         self.folder_create('temp/half/')
         self.folder_create('temp/shronk/')
@@ -18,7 +19,7 @@ class FaceMirror:
         self.faces = self.face_detect(self.image_path,self.cascade_path)
         print("{} faces found".format(len(self.faces)))
 
-        self.face_slice()
+        self.face_slice(self.side_choise)
         for image in os.listdir('temp/half/'):
             self.image_flip(image)
         self.image_overlay()
@@ -48,14 +49,21 @@ class FaceMirror:
 
             image1 = Image.open('temp/half/' + image_path)
             image2 = Image.open('temp/half/flip_' + image_path)
-            self.image_concat(image1, image2, image_path)
+            self.image_concat(image1, image2, image_path, self.side_choise)
         except:
             pass
 
-    def image_concat(self, image1, image2, image):
-        final = Image.new('RGB', (image1.width + image2.width, image1.height))
-        final.paste(image1, (0,0))
-        final.paste(image2, (image1.width, 0))
+    def image_concat(self, image1, image2, image, side):
+        if side == '-l':
+            final = Image.new('RGB', (image1.width + image2.width, image1.height))
+            final.paste(image1, (0,0))
+            final.paste(image2, (image1.width, 0))
+        elif side == '-r':
+            final = Image.new('RGB', (image1.width + image2.width, image1.height))
+            final.paste(image2, (0,0))
+            final.paste(image1, (image2.width, 0))
+        else:
+            pass
         final.save('temp/shronk/{}'.format(image))
 
     def temp_clear(self, directory):
@@ -67,10 +75,16 @@ class FaceMirror:
         if not os.path.exists(name):
             os.makedirs(name)
 
-    def face_slice(self):
+    def face_slice(self, side):
         for x,y,w,h in self.faces:
-            roi_color_left = self.initial_image[y: y + h, x: x + w//2]
-            cv2.imwrite("temp/half/{}x{}x{}x{}.jpg".format(x,y,w,h), roi_color_left)
+            if side == '-l': 
+                roi_color = self.initial_image[y: y + h, x: x + w//2]
+            elif side == '-r':
+                roi_color = self.initial_image[y: y + h, x + w//2: x + w] #bruh
+            else:
+                print('Choose the side')
+                pass
+            cv2.imwrite("temp/half/{}x{}x{}x{}.jpg".format(x,y,w,h), roi_color)
 
     def image_overlay(self):
         for x,y,w,h in self.faces:
