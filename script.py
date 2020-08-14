@@ -27,7 +27,7 @@ class FaceMirror:
         self.temp_clear('half/')
         self.temp_clear('shronk/')
 
-    def face_detect(self, image_path, cascade_path):
+    def face_detect(self, image_path, cascade_path): #face detection in the given image using haarcascades
         face_cascade = cv2.CascadeClassifier(cascade_path)
         self.initial_image = cv2.imread(image_path)
         image_grayscale = cv2.cvtColor(self.initial_image, cv2.COLOR_BGR2GRAY)
@@ -41,7 +41,7 @@ class FaceMirror:
         print("{} faces found".format(len(self.faces)))
         return self.faces      
 
-    def image_flip(self, image_path):
+    def image_flip(self, image_path): #flipping the image by vertical axis
         try:
             image_obj = Image.open('temp/half/' + image_path)
             flipped_image = image_obj.transpose(Image.FLIP_LEFT_RIGHT)
@@ -53,7 +53,7 @@ class FaceMirror:
         except:
             pass
 
-    def image_concat(self, image1, image2, image, side):
+    def image_concat(self, image1, image2, image, side): #concatenating two images of the same height horizontally
         if side == '-l':
             final = Image.new('RGB', (image1.width + image2.width, image1.height))
             final.paste(image1, (0,0))
@@ -66,27 +66,27 @@ class FaceMirror:
             pass
         final.save('temp/shronk/{}'.format(image))
 
-    def temp_clear(self, directory):
+    def temp_clear(self, directory): #deleting the files in given directory
         files = glob.glob('temp/' + directory + '*')
         for f in files:
             os.remove(f)
 
-    def folder_create(self, name):
+    def folder_create(self, name): #creating a folder with a given name
         if not os.path.exists(name):
             os.makedirs(name)
 
-    def face_slice(self, side):
+    def face_slice(self, side): #slicing the left or right side of the image and saving to a new one
         for x,y,w,h in self.faces:
             if side == '-l': 
                 roi_color = self.initial_image[y: y + h, x: x + w//2]
             elif side == '-r':
-                roi_color = self.initial_image[y: y + h, x + w//2: x + w] #bruh
+                roi_color = self.initial_image[y: y + h, x + w//2: x + w] 
             else:
                 print('Choose the side')
                 pass
             cv2.imwrite("temp/half/{}x{}x{}x{}.jpg".format(x,y,w,h), roi_color)
 
-    def image_overlay(self):
+    def image_overlay(self): #placing an overlay image to a certain coordinates on initial image  
         for x,y,w,h in self.faces:
             path = str(x) +'x'+ str(y) +'x'+ str(w) +'x'+ str(h) + '.jpg'
             s_img = cv2.imread('temp/shronk/' + path, -1)
